@@ -1,0 +1,7 @@
+[USER={removedUserId}]@removedUserName[/USER] was {action}.
+
+User's Email Address: [plain]{removedUserEmail}[/plain]
+
+User's active upgrades:
+
+{upgrades}

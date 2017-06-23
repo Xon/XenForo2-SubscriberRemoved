@@ -1,0 +1,12 @@
+{
+    "admin/sv_subscriberremoved_option_template_convo_data.html": {
+        "version_id": 2000070,
+        "version_string": "2.0.0",
+        "hash": "b54304ee42320bea92deac4383bc35d8"
+    },
+    "admin/sv_subscriberremoved_option_template_thread_data.html": {
+        "version_id": 2000070,
+        "version_string": "2.0.0",
+        "hash": "e740b295cc5db0b7f77c171fe525843a"
+    }
+}

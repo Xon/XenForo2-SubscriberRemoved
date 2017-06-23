@@ -1,0 +1,16 @@
+{
+    "edit_format": "template",
+    "edit_format_params": "sv_subscriberremoved_option_template_convo_data",
+    "data_type": "array",
+    "sub_options": [
+        "start_conversation",
+        "starter",
+        "recipients"
+    ],
+    "validation_class": "\\SV\\SubscriberRemoved\\Option\\SubscriberRemovedStartConversation",
+    "validation_method": "verifyOption",
+    "default_value": "{\"start_conversation\":0,\"starter\":\"\",\"recipients\":\"\"}",
+    "relations": {
+        "SV_SubscriberRemoved": 10
+    }
+}

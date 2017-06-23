@@ -1,0 +1,16 @@
+<xf:checkboxrow label="{$option.title}" hint="{$editHtml}">
+
+    <xf:option name="{$inputName}[start_conversation]" value="1" label=""
+               checked="{$option.option_value.start_conversation}">
+
+        <xf:textbox name="{$inputName}[starter]" value="{$option.option_value.starter}"
+                    placeholder="{{ phrase('sv_subscriberremoved_conversation_starter') }}"/>
+
+        <xf:textbox name="{$inputName}[recipients]" value="{$option.option_value.recipients}"
+                    placeholder="{{ phrase('sv_subscriberremoved_conversation_recipients') }}"/>
+    </xf:option>
+
+    <xf:explain>{$explainHtml}</xf:explain>
+    <xf:html>{$listedHtml}</xf:html>
+
+</xf:checkboxrow>
