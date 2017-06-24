@@ -1,4 +1,4 @@
-[USER={removedUserId}]@removedUserName[/USER] was {action}.
+[USER={removedUserId}]@{removedUserName}[/USER] was {action}.
 
 User's Email Address: [plain]{removedUserEmail}[/plain]
 

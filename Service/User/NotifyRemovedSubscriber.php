@@ -35,10 +35,10 @@ class NotifyRemovedSubscriber extends AbstractService
 
 	public function __construct(\XF\App $app, User $removedSubscriber, $action)
 	{
-		parent::__construct($app);
-
 		$this->action = $action;
 		$this->removedSubscriber = $removedSubscriber;
+
+		parent::__construct($app);
 	}
 
 	protected function setup()
@@ -46,8 +46,15 @@ class NotifyRemovedSubscriber extends AbstractService
 		$this->startThread = \XF::options()->sv_subscriberremoved_thread_data['create_thread'];
 		$this->startConversation = \XF::options()->sv_subscriberremoved_conversation_data['start_conversation'];
 
-		$this->setThreadData(\XF::options()->sv_subscriberremoved_thread_data);
-		$this->setConversationData(\XF::options()->sv_subscriberremoved_conversation_data);
+		if ($this->startThread)
+		{
+			$this->setThreadData(\XF::options()->sv_subscriberremoved_thread_data);
+		}
+
+		if ($this->startConversation)
+		{
+			$this->setConversationData(\XF::options()->sv_subscriberremoved_conversation_data);
+		}
 
 		if ($this->isSubscriber === null || $this->activeUpgrades === null)
 		{
@@ -66,7 +73,7 @@ class NotifyRemovedSubscriber extends AbstractService
 
 	protected function setThreadData(array $threadData)
 	{
-		$this->threadForum = $this->findOne('XF:Forum', $threadData['node_id']);
+		$this->threadForum = $this->findOne('XF:Forum', ['node_id' => $threadData['node_id']]);
 		$this->threadAuthor = $this->repository('XF:User')->getUserByNameOrEmail($threadData['thread_author']);
 	}
 
@@ -119,14 +126,8 @@ class NotifyRemovedSubscriber extends AbstractService
 
 	protected function getUpgradePhraseParams(UserUpgradeActive $activeUpgrade)
 	{
-		$metadata = $activeUpgrade->PurchaseRequest->provider_metadata;
-
-		$metadataStr = '';
-
-		foreach ($metadata as $key => $metadatum)
-		{
-			$metadataStr .= "\n$key: $metadatum";
-		}
+		$txnId = $this->finder('XF:PaymentProviderLog')
+			->where('purchase_request_key', $activeUpgrade->purchase_request_key)->fetchOne()->transaction_id;
 
 		return [
 			'title' => $activeUpgrade->Upgrade->title,
@@ -134,7 +135,7 @@ class NotifyRemovedSubscriber extends AbstractService
 			'length_amount' => $activeUpgrade->Upgrade->length_amount,
 			'length_unit' => $activeUpgrade->Upgrade->length_unit,
 			'payment_profile' => $activeUpgrade->PurchaseRequest->PaymentProfile->title,
-			'metadata' => $metadataStr
+			'txnId' => $txnId
 		];
 	}
 
