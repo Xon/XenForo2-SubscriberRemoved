@@ -2,15 +2,20 @@
 
 namespace SV\SubscriberRemoved\Option;
 
+use XF\Entity\Option;
 use XF\Option\AbstractOption;
 
 class SubscriberRemovedStartConversation extends AbstractOption
 {
-    public static function verifyOption(array &$conversationData, \XF\Entity\Option $option)
+    public static function verifyOption(array &$conversationData, Option $option)
     {
         if (isset($conversationData['start_conversation']))
         {
-            $conversationStarter = \XF::repository('XF:User')->getUserByNameOrEmail($conversationData['starter']);
+            /** @var \XF\Repository\User $userRepo */
+            $userRepo = \XF::repository('XF:User');
+
+            /** @var \XF\Entity\User $conversationStarter */
+            $conversationStarter = $userRepo->getUserByNameOrEmail($conversationData['starter']);
 
             if (!$conversationStarter)
             {
@@ -25,7 +30,8 @@ class SubscriberRemovedStartConversation extends AbstractOption
 
             foreach ($recipients AS $key => &$recipient)
             {
-                $user = \XF::repository('XF:User')->getUserByNameOrEmail($recipient);
+                /** @var \XF\Entity\User $user */
+                $user = $userRepo->getUserByNameOrEmail($recipient);
 
                 if (!$user)
                 {

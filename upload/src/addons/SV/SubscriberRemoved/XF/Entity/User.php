@@ -10,7 +10,9 @@ class User extends XFCP_User
 
         if ($this->is_banned && $this->isChanged('is_banned'))
         {
-            $this->app()->service('SV\SubscriberRemoved:User\NotifyRemovedSubscriber', $this, 'banned')->notify();
+            /** @var \SV\SubscriberRemoved\Service\User\NotifyRemovedSubscriber $service */
+            $service = $this->app()->service('SV\SubscriberRemoved:User\NotifyRemovedSubscriber', $this, 'banned');
+            $service->notify();
         }
     }
 
@@ -20,7 +22,9 @@ class User extends XFCP_User
 
         if (!$this->is_banned)
         {
-            $this->app()->service('SV\SubscriberRemoved:User\NotifyRemovedSubscriber', $this, 'deleted')->notify();
+            /** @var \SV\SubscriberRemoved\Service\User\NotifyRemovedSubscriber $service */
+            $service = $this->app()->service('SV\SubscriberRemoved:User\NotifyRemovedSubscriber', $this, 'deleted');
+            $service->notify();
         }
     }
 }

@@ -2,11 +2,12 @@
 
 namespace SV\SubscriberRemoved\Option;
 
+use XF\Entity\Option;
 use XF\Option\AbstractOption;
 
 class SubscriberRemovedCreateThread extends AbstractOption
 {
-    public static function renderOption(\XF\Entity\Option $option, array $htmlParams)
+    public static function renderOption(Option $option, array $htmlParams)
     {
         $selectData = self::getSelectData($option, $htmlParams);
 
@@ -15,16 +16,17 @@ class SubscriberRemovedCreateThread extends AbstractOption
         );
 
         return self::getTemplate(
-            'sv_subscriberremoved_option_template_thread_data', $option, $htmlParams, [
+            'admin:sv_subscriberremoved_option_template_thread_data', $option, $htmlParams, [
             'nodeSelect' => $select
         ]
         );
     }
 
-    public static function verifyOption(array &$threadData, \XF\Entity\Option $option)
+    public static function verifyOption(array &$threadData, Option $option)
     {
         if (isset($threadData['create_thread']))
         {
+            /** @var \XF\Entity\User $threadAuthor */
             $threadAuthor = \XF::finder('XF:User')->where('username', $threadData['thread_author'])->fetchOne();
 
             if (!$threadAuthor)
@@ -38,7 +40,7 @@ class SubscriberRemovedCreateThread extends AbstractOption
         return true;
     }
 
-    protected static function getSelectData(\XF\Entity\Option $option, array $htmlParams)
+    protected static function getSelectData(Option $option, array $htmlParams)
     {
         /** @var \XF\Repository\Node $nodeRepo */
         $nodeRepo = \XF::repository('XF:Node');

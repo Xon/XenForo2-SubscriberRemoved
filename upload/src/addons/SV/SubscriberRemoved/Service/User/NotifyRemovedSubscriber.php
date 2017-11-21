@@ -64,6 +64,7 @@ class NotifyRemovedSubscriber extends AbstractService
 
     protected function determineIfSubscriber()
     {
+        /** @var \XF\Repository\UserUpgrade $userUpgradeRepo */
         $userUpgradeRepo = $this->repository('XF:UserUpgrade');
         $this->activeUpgrades = $userUpgradeRepo->findActiveUserUpgradesForList()
                                                 ->where('user_id', $this->removedSubscriber->user_id)->fetch();
@@ -74,12 +75,16 @@ class NotifyRemovedSubscriber extends AbstractService
     protected function setThreadData(array $threadData)
     {
         $this->threadForum = $this->findOne('XF:Forum', ['node_id' => $threadData['node_id']]);
-        $this->threadAuthor = $this->repository('XF:User')->getUserByNameOrEmail($threadData['thread_author']);
+        /** @var \XF\Repository\User $userRepo */
+        $userRepo = $this->repository('XF:User');
+        $this->threadAuthor = $userRepo->getUserByNameOrEmail($threadData['thread_author']);
     }
 
     protected function setConversationData(array $conversationData)
     {
-        $this->conversationStarter = $this->repository('XF:User')->getUserByNameOrEmail($conversationData['starter']);
+        /** @var \XF\Repository\User $userRepo */
+        $userRepo = $this->repository('XF:User');
+        $this->conversationStarter = $userRepo->getUserByNameOrEmail($conversationData['starter']);
         $this->conversationRecipients = $conversationData['recipients'];
     }
 
@@ -162,8 +167,7 @@ class NotifyRemovedSubscriber extends AbstractService
             }
             );
             $threadCreator->setContent($this->getThreadTitle(), $this->getThreadMessage());
-            $threadCreator->logIp(false);
-            $threadCreator->setPerformValidations(false);
+            $threadCreator->setIsAutomated();
             $threadCreator->save();
             $threadCreator->sendNotifications();
         }
@@ -174,8 +178,8 @@ class NotifyRemovedSubscriber extends AbstractService
             $conversationCreator = $this->service('XF:Conversation\Creator', $this->conversationStarter);
             $conversationCreator->setRecipientsTrusted($this->conversationRecipients);
             $conversationCreator->setContent($this->getConversationTitle(), $this->getConversationMessage());
-            $conversationCreator->setLogIp(false);
-            $conversationCreator->save(false);
+            $conversationCreator->setIsAutomated();
+            $conversationCreator->save();
             $conversationCreator->sendNotifications();
         }
     }
