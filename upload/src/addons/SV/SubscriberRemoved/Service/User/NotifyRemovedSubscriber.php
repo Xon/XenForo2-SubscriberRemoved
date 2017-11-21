@@ -131,15 +131,18 @@ class NotifyRemovedSubscriber extends AbstractService
 
     protected function getUpgradePhraseParams(UserUpgradeActive $activeUpgrade)
     {
-        $txnId = $this->finder('XF:PaymentProviderLog')
-                      ->where('purchase_request_key', $activeUpgrade->purchase_request_key)->fetchOne()->transaction_id;
+        /** @var \XF\Entity\PaymentProviderLog $paymentLog */
+        $paymentLog = $this->finder('XF:PaymentProviderLog')
+                           ->where('purchase_request_key', $activeUpgrade->purchase_request_key)
+                           ->fetchOne();
+        $txnId = $paymentLog ? $paymentLog->transaction_id : \XF::phrase('n_a');
 
         return [
             'title'           => $activeUpgrade->Upgrade->title,
             'cost_phrase'     => $activeUpgrade->Upgrade->cost_phrase,
             'length_amount'   => $activeUpgrade->Upgrade->length_amount,
             'length_unit'     => $activeUpgrade->Upgrade->length_unit,
-            'payment_profile' => $activeUpgrade->PurchaseRequest->PaymentProfile->title,
+            'payment_profile' => $activeUpgrade->PurchaseRequest ? $activeUpgrade->PurchaseRequest->PaymentProfile->title : \XF::phrase('manually_upgrade_user'),
             'txnId'           => $txnId
         ];
     }
