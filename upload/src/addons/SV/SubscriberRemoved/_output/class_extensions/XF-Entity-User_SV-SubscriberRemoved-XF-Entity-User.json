@@ -1,6 +1,6 @@
 {
     "from_class": "XF\\Entity\\User",
     "to_class": "SV\\SubscriberRemoved\\XF\\Entity\\User",
-    "execute_order": 10,
+    "execute_order": 5847,
     "active": true
 }
