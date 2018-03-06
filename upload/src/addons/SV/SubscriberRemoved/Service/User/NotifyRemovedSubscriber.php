@@ -164,25 +164,29 @@ class NotifyRemovedSubscriber extends AbstractService
         if ($this->startThread)
         {
             /** @var \XF\Service\Thread\Creator $threadCreator */
-            $threadCreator = \XF::asVisitor(
-                $this->threadAuthor, function () {
-                return $this->service('XF:Thread\Creator', $this->threadForum);
-            }
-            );
-            $threadCreator->setContent($this->getThreadTitle(), $this->getThreadMessage());
-            $threadCreator->setIsAutomated();
-            $threadCreator->save();
+            $threadCreator = \XF::asVisitor($this->threadAuthor, function () {
+                /** @var \XF\Service\Thread\Creator $threadCreator */
+                $threadCreator = $this->service('XF:Thread\Creator', $this->threadForum);
+                $threadCreator->setContent($this->getThreadTitle(), $this->getThreadMessage());
+                $threadCreator->setIsAutomated();
+                $threadCreator->setPrefix($this->threadForum->default_prefix_id);
+                $threadCreator->save();
+                return $threadCreator;
+            });
             $threadCreator->sendNotifications();
         }
 
         if ($this->startConversation)
         {
             /** @var \XF\Service\Conversation\Creator $conversationCreator */
-            $conversationCreator = $this->service('XF:Conversation\Creator', $this->conversationStarter);
-            $conversationCreator->setRecipientsTrusted($this->conversationRecipients);
-            $conversationCreator->setContent($this->getConversationTitle(), $this->getConversationMessage());
-            $conversationCreator->setIsAutomated();
-            $conversationCreator->save();
+            $conversationCreator = \XF::asVisitor($this->conversationStarter, function () {
+                /** @var \XF\Service\Conversation\Creator $conversationCreator */
+                $conversationCreator = $this->service('XF:Conversation\Creator', $this->conversationStarter);
+                $conversationCreator->setRecipientsTrusted($this->conversationRecipients);
+                $conversationCreator->setContent($this->getConversationTitle(), $this->getConversationMessage());
+                $conversationCreator->setIsAutomated();
+                $conversationCreator->save();
+            });
             $conversationCreator->sendNotifications();
         }
     }
