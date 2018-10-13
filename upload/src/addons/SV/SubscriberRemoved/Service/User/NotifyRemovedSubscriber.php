@@ -161,7 +161,7 @@ class NotifyRemovedSubscriber extends AbstractService
 
     public function notify()
     {
-        if ($this->startThread)
+        if ($this->startThread && $this->threadAuthor)
         {
             /** @var \XF\Service\Thread\Creator $threadCreator */
             $threadCreator = \XF::asVisitor($this->threadAuthor, function () {
@@ -171,12 +171,13 @@ class NotifyRemovedSubscriber extends AbstractService
                 $threadCreator->setIsAutomated();
                 $threadCreator->setPrefix($this->threadForum->default_prefix_id);
                 $threadCreator->save();
+
                 return $threadCreator;
             });
             $threadCreator->sendNotifications();
         }
 
-        if ($this->startConversation)
+        if ($this->startConversation && $this->conversationStarter)
         {
             /** @var \XF\Service\Conversation\Creator $conversationCreator */
             $conversationCreator = \XF::asVisitor($this->conversationStarter, function () {
@@ -186,6 +187,8 @@ class NotifyRemovedSubscriber extends AbstractService
                 $conversationCreator->setContent($this->getConversationTitle(), $this->getConversationMessage());
                 $conversationCreator->setIsAutomated();
                 $conversationCreator->save();
+
+                return $conversationCreator;
             });
             $conversationCreator->sendNotifications();
         }

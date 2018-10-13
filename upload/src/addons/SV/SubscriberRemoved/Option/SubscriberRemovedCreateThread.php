@@ -17,8 +17,8 @@ class SubscriberRemovedCreateThread extends AbstractOption
 
         return self::getTemplate(
             'admin:sv_subscriberremoved_option_template_thread_data', $option, $htmlParams, [
-            'nodeSelect' => $select
-        ]
+                'nodeSelect' => $select
+            ]
         );
     }
 
