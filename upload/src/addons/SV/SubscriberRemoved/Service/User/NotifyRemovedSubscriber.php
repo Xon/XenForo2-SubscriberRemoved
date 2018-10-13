@@ -32,6 +32,8 @@ class NotifyRemovedSubscriber extends AbstractService
 
     protected $contentPhrases = [];
     protected $upgradePhrases = [];
+    protected $threadData = [];
+    protected $conversationData = [];
 
     public function __construct(\XF\App $app, User $removedSubscriber, $action)
     {
@@ -74,6 +76,7 @@ class NotifyRemovedSubscriber extends AbstractService
 
     protected function setThreadData(array $threadData)
     {
+        $this->threadData = $threadData;
         $this->threadForum = $this->findOne('XF:Forum', ['node_id' => $threadData['node_id']]);
         /** @var \XF\Repository\User $userRepo */
         $userRepo = $this->repository('XF:User');
@@ -82,6 +85,7 @@ class NotifyRemovedSubscriber extends AbstractService
 
     protected function setConversationData(array $conversationData)
     {
+        $this->conversationData = $conversationData;
         /** @var \XF\Repository\User $userRepo */
         $userRepo = $this->repository('XF:User');
         $this->conversationStarter = $userRepo->getUserByNameOrEmail($conversationData['starter']);
@@ -161,36 +165,57 @@ class NotifyRemovedSubscriber extends AbstractService
 
     public function notify()
     {
-        if ($this->startThread && $this->threadAuthor)
+        if ($this->startThread)
         {
-            /** @var \XF\Service\Thread\Creator $threadCreator */
-            $threadCreator = \XF::asVisitor($this->threadAuthor, function () {
+            if ($this->threadForum && $this->threadAuthor)
+            {
                 /** @var \XF\Service\Thread\Creator $threadCreator */
-                $threadCreator = $this->service('XF:Thread\Creator', $this->threadForum);
-                $threadCreator->setContent($this->getThreadTitle(), $this->getThreadMessage());
-                $threadCreator->setIsAutomated();
-                $threadCreator->setPrefix($this->threadForum->default_prefix_id);
-                $threadCreator->save();
+                $threadCreator = \XF::asVisitor($this->threadAuthor, function () {
+                    /** @var \XF\Service\Thread\Creator $threadCreator */
+                    $threadCreator = $this->service('XF:Thread\Creator', $this->threadForum);
+                    $threadCreator->setContent($this->getThreadTitle(), $this->getThreadMessage());
+                    $threadCreator->setIsAutomated();
+                    $threadCreator->setPrefix($this->threadForum->default_prefix_id);
+                    $threadCreator->save();
 
-                return $threadCreator;
-            });
-            $threadCreator->sendNotifications();
+                    return $threadCreator;
+                });
+                $threadCreator->sendNotifications();
+            }
+            else
+            {
+                if (!$this->threadForum)
+                {
+                    \XF::logError("Expected user {$this->threadForum['thread_author']} to exist when reporting " . $this->getThreadTitle(), true);
+                }
+                if (!$this->threadAuthor)
+                {
+                    \XF::logError("Expected forum {$this->threadForum['node_id']} to exist when reporting " . $this->getThreadTitle(), true);
+                }
+            }
         }
 
-        if ($this->startConversation && $this->conversationStarter)
+        if ($this->startConversation)
         {
-            /** @var \XF\Service\Conversation\Creator $conversationCreator */
-            $conversationCreator = \XF::asVisitor($this->conversationStarter, function () {
+            if ($this->conversationStarter)
+            {
                 /** @var \XF\Service\Conversation\Creator $conversationCreator */
-                $conversationCreator = $this->service('XF:Conversation\Creator', $this->conversationStarter);
-                $conversationCreator->setRecipientsTrusted($this->conversationRecipients);
-                $conversationCreator->setContent($this->getConversationTitle(), $this->getConversationMessage());
-                $conversationCreator->setIsAutomated();
-                $conversationCreator->save();
+                $conversationCreator = \XF::asVisitor($this->conversationStarter, function () {
+                    /** @var \XF\Service\Conversation\Creator $conversationCreator */
+                    $conversationCreator = $this->service('XF:Conversation\Creator', $this->conversationStarter);
+                    $conversationCreator->setRecipientsTrusted($this->conversationRecipients);
+                    $conversationCreator->setContent($this->getConversationTitle(), $this->getConversationMessage());
+                    $conversationCreator->setIsAutomated();
+                    $conversationCreator->save();
 
-                return $conversationCreator;
-            });
-            $conversationCreator->sendNotifications();
+                    return $conversationCreator;
+                });
+                $conversationCreator->sendNotifications();
+            }
+            else
+            {
+                \XF::logError("Expected user {$this->conversationData['starter']} to exist when reporting " . $this->getConversationTitle(), true);
+            }
         }
     }
 }
