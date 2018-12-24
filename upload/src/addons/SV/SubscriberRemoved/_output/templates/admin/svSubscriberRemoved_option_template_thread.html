@@ -1,0 +1,14 @@
+<xf:checkboxrow label="{$option.title}"
+				hint="{$hintHtml}"
+				explain="{$explainHtml}"
+				html="{$listedHtml}"
+				>
+
+    <xf:option name="{$inputName}[create_thread]" value="1" label=""
+               checked="{$option.option_value.create_thread}">
+        <xf:textbox name="{$inputName}[thread_author]" value="{$option.option_value.thread_author}" ac="single" maxlength="{{ max_length($xf.visitor, 'username') }}"
+                    placeholder="{{ phrase('sv_subscriberremoved_thread_author') }}"/>
+
+        <xf:html>{$nodeSelect|raw}</xf:html>
+    </xf:option>
+</xf:checkboxrow>

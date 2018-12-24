@@ -1,6 +1,6 @@
 {
     "edit_format": "template",
-    "edit_format_params": "sv_subscriberremoved_option_template_convo_data",
+    "edit_format_params": "svSubscriberRemoved_option_template_convo",
     "data_type": "array",
     "sub_options": [
         "start_conversation",

@@ -1,4 +1,8 @@
-<xf:checkboxrow label="{$option.title}" hint="{$editHtml}">
+<xf:checkboxrow label="{$option.title}"
+				hint="{$hintHtml}"
+				explain="{$explainHtml}"
+				html="{$listedHtml}"
+				>
 
     <xf:option name="{$inputName}[start_conversation]" value="1" label=""
                checked="{$option.option_value.start_conversation}">
@@ -9,8 +13,4 @@
        <xf:textbox name="{$inputName}[recipients]" value="{$option.option_value.recipients}" ac="multiple"
                     placeholder="{{ phrase('sv_subscriberremoved_conversation_recipients') }}"/>
     </xf:option>
-
-    <xf:explain>{$explainHtml}</xf:explain>
-    <xf:html>{$listedHtml}</xf:html>
-
 </xf:checkboxrow>
