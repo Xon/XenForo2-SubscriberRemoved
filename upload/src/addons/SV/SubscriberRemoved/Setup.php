@@ -29,8 +29,10 @@ class Setup extends AbstractSetup
 
         if ($options->offsetExists('subnotify_sendpm'))
         {
+            $recipients = preg_split('#\s*,\s*#', $options->subnotify_pmrecipients, -1, PREG_SPLIT_NO_EMPTY);
+            $recipients = \array_map('\trim', $recipients);
             $rawUsers = \XF::finder('XF:User')
-                           ->where('username', $options->subnotify_pmrecipients)
+                           ->where('username', $recipients)
                            ->limit(1)
                            ->fetchColumns('user_id');
             $recipients = [];
