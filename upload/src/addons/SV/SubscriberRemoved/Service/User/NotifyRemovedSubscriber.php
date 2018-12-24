@@ -80,7 +80,7 @@ class NotifyRemovedSubscriber extends AbstractService
     {
         $this->threadData = $threadData;
         $this->threadForum = $this->findOne('XF:Forum', ['node_id' => $threadData['nodeId']]);
-        $this->threadAuthor = $this->findOne('XF:User', ['user_id' => $threadData['threadStarterId']]);
+        $this->threadAuthor = $this->findOne('XF:User', ['user_id' => $threadData['threadAuthorId']]);
     }
 
     protected function setConversationData(array $conversationData)
