@@ -21,7 +21,7 @@ class Setup extends AbstractSetup
         if ($options->offsetExists('subnotify_createthread'))
         {
             $deferOptions['sv_subscriberremoved_thread_data'] = [
-                'enable'   => $options->subnotify_createthread,
+                'enable'         => $options->subnotify_createthread,
                 'nodeId'         => $options->subnotify_forumid,
                 'threadAuthorId' => $options->subnotify_userid,
             ];
@@ -42,9 +42,9 @@ class Setup extends AbstractSetup
             }
 
             $deferOptions['sv_subscriberremoved_conversation_data'] = [
-                'enable' => $options->subnotify_sendpm,
-                'starterId'          => $options->subnotify_pmsenderid,
-                'recipientIds'       => $recipients,
+                'enable'       => $options->subnotify_sendpm,
+                'starterId'    => $options->subnotify_pmsenderid,
+                'recipientIds' => $recipients,
             ];
         }
 

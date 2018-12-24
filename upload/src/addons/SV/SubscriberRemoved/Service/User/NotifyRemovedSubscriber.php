@@ -6,7 +6,6 @@ use XF\Entity\User;
 use XF\Entity\UserUpgradeActive;
 use XF\Mvc\Entity\AbstractCollection;
 use XF\Service\AbstractService;
-use XF\Service\Thread\Creator;
 
 class NotifyRemovedSubscriber extends AbstractService
 {
@@ -86,8 +85,6 @@ class NotifyRemovedSubscriber extends AbstractService
     protected function setConversationData(array $conversationData)
     {
         $this->conversationData = $conversationData;
-        /** @var \XF\Repository\User $userRepo */
-        $userRepo = $this->repository('XF:User');
         $this->conversationStarter = $this->findOne('XF:User', ['user_id' => $conversationData['starterId']]);
         $this->conversationRecipients = $this->finder('XF:User')->whereIds($conversationData['recipientIds'])->fetch();
     }
