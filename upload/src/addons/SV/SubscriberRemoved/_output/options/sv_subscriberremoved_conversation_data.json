@@ -1,15 +1,15 @@
 {
-    "edit_format": "template",
-    "edit_format_params": "svSubscriberRemoved_option_template_convo",
+    "edit_format": "callback",
+    "edit_format_params": "SV\\SubscriberRemoved\\Option\\SubscriberRemovedStartConversation::renderOption",
     "data_type": "array",
     "sub_options": [
-        "start_conversation",
-        "starter",
-        "recipients"
+        "enable",
+        "starterId",
+        "recipientIds"
     ],
     "validation_class": "\\SV\\SubscriberRemoved\\Option\\SubscriberRemovedStartConversation",
     "validation_method": "verifyOption",
-    "default_value": "{\"start_conversation\":0,\"starter\":\"\",\"recipients\":\"\"}",
+    "default_value": "{\"enable\":0,\"starterId\":1,\"recipientIds\":[]}",
     "relations": {
         "SV_SubscriberRemoved": 10
     }

@@ -7,57 +7,88 @@ use XF\Option\AbstractOption;
 
 class SubscriberRemovedStartConversation extends AbstractOption
 {
+    public static function renderOption(Option $option, array $htmlParams)
+    {
+        $conversationData = $option->option_value;
+        $starter = empty($conversationData['starterId']) ? null : $conversationData['starterId'];
+        if ($starter)
+        {
+            $rawUsernames = \XF::finder('XF:User')
+                               ->where('user_id', $starter)
+                               ->limit(1)
+                               ->fetchColumns('username');
+            $rawUsernames = reset($rawUsernames);
+            $starter = $rawUsernames ? $rawUsernames['username'] : null;
+        }
+
+        $recipients = empty($conversationData['recipientIds']) ? [] : $conversationData['recipientIds'];
+        $recipientUsers = [];
+        if ($recipients)
+        {
+            $rawUsers = \XF::finder('XF:User')
+                           ->where('user_id', $recipients)
+                           ->fetchColumns('username');
+            foreach ($rawUsers as $rawUser)
+            {
+                $recipientUsers[] = $rawUser['username'];
+            }
+        }
+
+        return self::getTemplate(
+            'admin:svSubscriberRemoved_option_template_convo', $option, $htmlParams, [
+                'convStarter' => $starter,
+                'recipients'  => implode(", ", $recipientUsers),
+            ]
+        );
+    }
+
     public static function verifyOption(array &$conversationData, Option $option)
     {
-        if (isset($conversationData['start_conversation']))
+        if (isset($conversationData['enable']))
         {
+            $conversationData['enable'] = (int)$conversationData['enable'];
+
             /** @var \XF\Repository\User $userRepo */
             $userRepo = \XF::repository('XF:User');
 
-            /** @var \XF\Entity\User $conversationStarter */
-            $conversationStarter = $userRepo->getUserByNameOrEmail($conversationData['starter']);
 
-            if (!$conversationStarter)
+            if (isset($conversationData['starter']))
             {
-                $option->error(\XF::phrase('sv_subscriberremoved_invalid_conversation_starter'));
+                $starter = $conversationData['starter'];
+                /** @var \XF\Entity\User $conversationStarter */
+                $conversationStarter = $userRepo->getUserByNameOrEmail($starter);
+                unset($conversationData['starter']);
 
-                return false;
-            }
-
-            $conversationData['starter'] = $conversationStarter->username;
-
-            $recipients = preg_split('#\s*,\s*#', $conversationData['recipients'], -1, PREG_SPLIT_NO_EMPTY);
-
-            foreach ($recipients AS $key => &$recipient)
-            {
-                /** @var \XF\Entity\User $user */
-                $user = $userRepo->getUserByNameOrEmail($recipient);
-
-                if (!$user)
+                if (!$conversationStarter)
                 {
-                    $option->error(\XF::phrase('sv_subscriberremoved_recipient_x_not_found', ['name' => $recipient]));
-
-                    return false;
+                    $option->error(\XF::phrase('requested_user_x_not_found', ['name' => $starter]));
                 }
-
-                $recipient = $user->username;
-
-                if ($user->user_id == $conversationStarter->user_id)
+                else
                 {
-                    unset($recipients[$key]);
+                    $conversationData['starterId'] = $conversationStarter->user_id;
                 }
             }
 
-            if (!$recipients)
+            if (isset($conversationData['recipients']))
             {
-                $option->error(\XF::phrase('sv_subscriberremoved_at_least_one_recipient_required'));
+                $recipients = preg_split('#\s*,\s*#', $conversationData['recipients'], -1, PREG_SPLIT_NO_EMPTY);
+                unset($conversationData['recipients']);
+                $notFound = [];
 
-                return false;
+                $matchedUsers = $userRepo->getUsersByNames($recipients, $notFound);
+                if ($notFound)
+                {
+                    $option->error(\XF::phrase('following_members_not_found_x', ['members' => implode(', ', $notFound)]));
+                }
+                else if (!$recipients)
+                {
+                    $option->error(\XF::phrase('please_enter_at_least_one_valid_recipient'));
+                }
+
+                $conversationData['recipientIds'] = \array_keys($matchedUsers->toArray());
             }
-
-            $conversationData['recipients'] = implode(', ', $recipients);
         }
 
-        return true;
+        return !$option->hasErrors();
     }
 }

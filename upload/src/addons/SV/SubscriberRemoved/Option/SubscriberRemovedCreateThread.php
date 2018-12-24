@@ -15,29 +15,53 @@ class SubscriberRemovedCreateThread extends AbstractOption
             $selectData['controlOptions'], $selectData['choices']
         );
 
+        $threadData = $option->option_value;
+        $threadAuthor = empty($threadData['threadAuthorId']) ? null : $threadData['threadAuthorId'];
+
+        if ($threadAuthor)
+        {
+            $rawUsernames = \XF::finder('XF:User')
+                               ->where('user_id', $threadAuthor)
+                               ->limit(1)
+                               ->fetchColumns('username');
+            $rawUsernames = reset($rawUsernames);
+            $threadAuthor = $rawUsernames ? $rawUsernames['username'] : null;
+        }
+
         return self::getTemplate(
             'admin:svSubscriberRemoved_option_template_thread', $option, $htmlParams, [
-                'nodeSelect' => $select
+                'threadAuthor' => $threadAuthor,
+                'nodeSelect'   => $select
             ]
         );
     }
 
     public static function verifyOption(array &$threadData, Option $option)
     {
-        if (isset($threadData['create_thread']))
+        if (isset($threadData['enable']))
         {
-            /** @var \XF\Entity\User $threadAuthor */
-            $threadAuthor = \XF::finder('XF:User')->where('username', $threadData['thread_author'])->fetchOne();
+            $threadData['enable'] = (int)$threadData['enable'];
+            $threadData['nodeId'] = (int)$threadData['nodeId'];
 
-            if (!$threadAuthor)
+            /** @var \XF\Repository\User $userRepo */
+            $userRepo = \XF::repository('XF:User');
+
+            if (isset($threadData['threadAuthor']))
             {
-                $option->error(\XF::phrase('sv_subscriberremoved_invalid_thread_author'));
+                /** @var \XF\Entity\User $threadAuthor */
+                $threadAuthor = $userRepo->getUserByNameOrEmail($threadData['threadAuthor']);
+                unset($threadData['threadAuthor']);
 
-                return false;
+                if (!$threadAuthor)
+                {
+                    $option->error(\XF::phrase('requested_user_x_not_found', ['name' => $threadData['starter']]));
+                }
+
+                $threadData['threadAuthorId'] = $threadAuthor->user_id;
             }
         }
 
-        return true;
+        return !$option->hasErrors();
     }
 
     protected static function getSelectData(Option $option, array $htmlParams)
@@ -57,8 +81,8 @@ class SubscriberRemovedCreateThread extends AbstractOption
         return [
             'choices'        => $choices,
             'controlOptions' => [
-                'name'  => $htmlParams['inputName'] . '[node_id]',
-                'value' => $option->option_value['node_id']
+                'name'  => $htmlParams['inputName'] . '[nodeId]',
+                'value' => $option->option_value['nodeId']
             ]
         ];
     }

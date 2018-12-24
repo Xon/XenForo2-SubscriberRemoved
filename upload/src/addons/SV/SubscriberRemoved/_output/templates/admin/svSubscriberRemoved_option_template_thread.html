@@ -4,9 +4,9 @@
 				html="{$listedHtml}"
 				>
 
-    <xf:option name="{$inputName}[create_thread]" value="1" label=""
-               checked="{$option.option_value.create_thread}">
-        <xf:textbox name="{$inputName}[thread_author]" value="{$option.option_value.thread_author}" ac="single" maxlength="{{ max_length($xf.visitor, 'username') }}"
+    <xf:option name="{$inputName}[enable]" value="1" label="" checked="{$option.option_value.enable}">
+        <xf:textbox name="{$inputName}[threadAuthor]" value="{$threadAuthor}" ac="single" 
+					maxlength="{{ max_length($xf.visitor, 'username') }}"
                     placeholder="{{ phrase('sv_subscriberremoved_thread_author') }}"/>
 
         <xf:html>{$nodeSelect|raw}</xf:html>

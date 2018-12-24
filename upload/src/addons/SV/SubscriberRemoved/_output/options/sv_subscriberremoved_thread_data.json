@@ -3,13 +3,13 @@
     "edit_format_params": "\\SV\\SubscriberRemoved\\Option\\SubscriberRemovedCreateThread::renderOption",
     "data_type": "array",
     "sub_options": [
-        "create_thread",
-        "node_id",
-        "thread_author"
+        "enable",
+        "nodeId",
+        "threadAuthorId"
     ],
     "validation_class": "\\SV\\SubscriberRemoved\\Option\\SubscriberRemovedCreateThread",
     "validation_method": "verifyOption",
-    "default_value": "{\"create_thread\":\"\",\"node_id\":\"\",\"thread_author\":\"\"}",
+    "default_value": "{\"enable\":0,\"nodeId\":\"\",\"threadAuthorId\":1}",
     "relations": {
         "SV_SubscriberRemoved": 1
     }

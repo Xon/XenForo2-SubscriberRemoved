@@ -21,18 +21,28 @@ class Setup extends AbstractSetup
         if ($options->offsetExists('subnotify_createthread'))
         {
             $deferOptions['sv_subscriberremoved_thread_data'] = [
-                'create_thread' => $options->subnotify_createthread,
-                'node_id'       => $options->subnotify_forumid,
-                'thread_author' => $options->subnotify_username,
+                'enable'   => $options->subnotify_createthread,
+                'nodeId'         => $options->subnotify_forumid,
+                'threadAuthorId' => $options->subnotify_userid,
             ];
         }
 
         if ($options->offsetExists('subnotify_sendpm'))
         {
+            $rawUsers = \XF::finder('XF:User')
+                           ->where('username', $options->subnotify_pmrecipients)
+                           ->limit(1)
+                           ->fetchColumns('user_id');
+            $recipients = [];
+            foreach ($rawUsers as $rawUser)
+            {
+                $recipients[] = $rawUser['user_id'];
+            }
+
             $deferOptions['sv_subscriberremoved_conversation_data'] = [
-                'start_conversation' => $options->subnotify_sendpm,
-                'starter'            => $options->subnotify_pmusername,
-                'recipients'         => $options->subnotify_pmrecipients,
+                'enable' => $options->subnotify_sendpm,
+                'starterId'          => $options->subnotify_pmsenderid,
+                'recipientIds'       => $recipients,
             ];
         }
 
@@ -45,7 +55,7 @@ class Setup extends AbstractSetup
     protected function finaliseOptions()
     {
         $deferOptions = $this->app->registry()->get('svSubscriberRemovedOptions');
-        if (!$deferOptions)
+        if (!$deferOptions && is_array($deferOptions))
         {
             foreach ($deferOptions as $optionName => $optionValue)
             {
@@ -60,6 +70,100 @@ class Setup extends AbstractSetup
         }
         $this->app->registry()->delete('svSubscriberRemovedOptions');
     }
+
+    public function upgrade2010000Step1()
+    {
+        /** @var \XF\Repository\User $userRepo */
+        $userRepo = \XF::repository('XF:User');
+
+        /** @var \XF\Entity\Option $option */
+        $option = \XF::finder('XF:Option')->whereId('sv_subscriberremoved_thread_data')->fetchOne();
+        if ($option)
+        {
+            $threadData = $option->option_value;
+            if (isset($threadData['create_thread']))
+            {
+                $threadData['enable'] = (int)$threadData['create_thread'];
+                unset($threadData['create_thread']);
+            }
+            if (isset($threadData['node_id']))
+            {
+                $threadData['nodeId'] = (int)$threadData['node_id'];
+                unset($threadData['node_id']);
+            }
+
+            if (isset($threadData['thread_author']))
+            {
+                /** @var \XF\Entity\User $threadAuthor */
+                $threadAuthor = $userRepo->getUserByNameOrEmail($threadData['thread_author']);
+                unset($threadData['thread_author']);
+
+                if ($threadAuthor)
+                {
+                    $threadData['threadAuthorId'] = $threadAuthor->user_id;
+                }
+            }
+
+            $option->setOption('verify_value', false);
+            $option->option_value = $threadData;
+            $option->saveIfChanged();
+        }
+
+        /** @var \XF\Entity\Option $option */
+        $option = \XF::finder('XF:Option')->whereId('sv_subscriberremoved_conversation_data')->fetchOne();
+        if ($option)
+        {
+            $conversationData = $option->option_value;
+            if (isset($conversationData['start_conversation']))
+            {
+                $conversationData['enable'] = (int)$conversationData['start_conversation'];
+                unset($conversationData['start_conversation']);
+            }
+
+            if (isset($conversationData['starter']))
+            {
+                /** @var \XF\Entity\User $threadAuthor */
+                $threadAuthor = $userRepo->getUserByNameOrEmail($conversationData['starter']);
+                unset($conversationData['starter']);
+
+                if ($threadAuthor)
+                {
+                    $conversationData['starterId'] = $threadAuthor->user_id;
+                }
+            }
+
+            if ($conversationData['recipients'])
+            {
+                $recipients = preg_split('#\s*,\s*#', $conversationData['recipients'], -1, PREG_SPLIT_NO_EMPTY);
+                unset($conversationData['recipients']);
+                $recipientIds = [];
+
+                foreach ($recipients AS $key => $recipient)
+                {
+                    /** @var \XF\Entity\User $user */
+                    $user = $userRepo->getUserByNameOrEmail($recipient);
+
+                    if (!$user)
+                    {
+                        continue;
+                    }
+
+                    if (isset($conversationData['starterId']) && $user->user_id === $conversationData['starterId'])
+                    {
+                        continue;
+                    }
+                    $recipientIds[] = $user->user_id;
+                }
+
+                $conversationData['recipientIds'] = $recipientIds;
+            }
+
+            $option->setOption('verify_value', false);
+            $option->option_value = $conversationData;
+            $option->saveIfChanged();
+        }
+    }
+
 
     public function postInstall(array &$stateChanges)
     {

@@ -4,13 +4,12 @@
 				html="{$listedHtml}"
 				>
 
-    <xf:option name="{$inputName}[start_conversation]" value="1" label=""
-               checked="{$option.option_value.start_conversation}">
+    <xf:option name="{$inputName}[enable]" value="1" label="" checked="{$option.option_value.enable}">
 
-        <xf:textbox name="{$inputName}[starter]" value="{$option.option_value.starter}"  ac="single" maxlength="{{ max_length($xf.visitor, 'username') }}"
+        <xf:textbox name="{$inputName}[starter]" value="{$convStarter}"  ac="single" maxlength="{{ max_length($xf.visitor, 'username') }}"
                     placeholder="{{ phrase('sv_subscriberremoved_conversation_starter') }}"/>
 
-       <xf:textbox name="{$inputName}[recipients]" value="{$option.option_value.recipients}" ac="multiple"
-                    placeholder="{{ phrase('sv_subscriberremoved_conversation_recipients') }}"/>
+       <xf:textbox name="{$inputName}[recipients]" value="{$recipients}" ac="multiple"
+				   placeholder="{{ phrase('sv_subscriberremoved_conversation_recipients') }}"/>
     </xf:option>
 </xf:checkboxrow>

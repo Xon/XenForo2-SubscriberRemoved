@@ -4,6 +4,7 @@ namespace SV\SubscriberRemoved\Service\User;
 
 use XF\Entity\User;
 use XF\Entity\UserUpgradeActive;
+use XF\Mvc\Entity\AbstractCollection;
 use XF\Service\AbstractService;
 use XF\Service\Thread\Creator;
 
@@ -20,6 +21,7 @@ class NotifyRemovedSubscriber extends AbstractService
     protected $startConversation = false;
     /** @var User */
     protected $conversationStarter = null;
+    /** @var AbstractCollection */
     protected $conversationRecipients;
 
     /** @var null|\XF\Entity\User */
@@ -30,9 +32,9 @@ class NotifyRemovedSubscriber extends AbstractService
     /** @var  \XF\Entity\UserUpgradeActive[] */
     protected $activeUpgrades = null;
 
-    protected $contentPhrases = [];
-    protected $upgradePhrases = [];
-    protected $threadData = [];
+    protected $contentPhrases   = [];
+    protected $upgradePhrases   = [];
+    protected $threadData       = [];
     protected $conversationData = [];
 
     public function __construct(\XF\App $app, User $removedSubscriber, $action)
@@ -45,8 +47,8 @@ class NotifyRemovedSubscriber extends AbstractService
 
     protected function setup()
     {
-        $this->startThread = \XF::options()->sv_subscriberremoved_thread_data['create_thread'];
-        $this->startConversation = \XF::options()->sv_subscriberremoved_conversation_data['start_conversation'];
+        $this->startThread = \XF::options()->sv_subscriberremoved_thread_data['enable'];
+        $this->startConversation = \XF::options()->sv_subscriberremoved_conversation_data['enable'];
 
         if ($this->startThread)
         {
@@ -77,10 +79,8 @@ class NotifyRemovedSubscriber extends AbstractService
     protected function setThreadData(array $threadData)
     {
         $this->threadData = $threadData;
-        $this->threadForum = $this->findOne('XF:Forum', ['node_id' => $threadData['node_id']]);
-        /** @var \XF\Repository\User $userRepo */
-        $userRepo = $this->repository('XF:User');
-        $this->threadAuthor = $userRepo->getUserByNameOrEmail($threadData['thread_author']);
+        $this->threadForum = $this->findOne('XF:Forum', ['node_id' => $threadData['nodeId']]);
+        $this->threadAuthor = $this->findOne('XF:User', ['user_id' => $threadData['threadStarterId']]);
     }
 
     protected function setConversationData(array $conversationData)
@@ -88,8 +88,8 @@ class NotifyRemovedSubscriber extends AbstractService
         $this->conversationData = $conversationData;
         /** @var \XF\Repository\User $userRepo */
         $userRepo = $this->repository('XF:User');
-        $this->conversationStarter = $userRepo->getUserByNameOrEmail($conversationData['starter']);
-        $this->conversationRecipients = $conversationData['recipients'];
+        $this->conversationStarter = $this->findOne('XF:User', ['user_id' => $conversationData['starterId']]);
+        $this->conversationRecipients = $this->finder('XF:User')->whereIds($conversationData['recipientIds'])->fetch();
     }
 
     protected function getUpgradePhrases()
@@ -186,18 +186,18 @@ class NotifyRemovedSubscriber extends AbstractService
             {
                 if (!$this->threadForum)
                 {
-                    \XF::logError("Expected user {$this->threadForum['thread_author']} to exist when reporting " . $this->getThreadTitle(), true);
+                    \XF::logError("Expected user {$this->threadForum['threadAuthorId']} to exist when reporting " . $this->getThreadTitle(), true);
                 }
                 if (!$this->threadAuthor)
                 {
-                    \XF::logError("Expected forum {$this->threadForum['node_id']} to exist when reporting " . $this->getThreadTitle(), true);
+                    \XF::logError("Expected forum {$this->threadForum['nodeId']} to exist when reporting " . $this->getThreadTitle(), true);
                 }
             }
         }
 
         if ($this->startConversation)
         {
-            if ($this->conversationStarter)
+            if ($this->conversationStarter && $this->conversationRecipients->count() > 0)
             {
                 /** @var \XF\Service\Conversation\Creator $conversationCreator */
                 $conversationCreator = \XF::asVisitor($this->conversationStarter, function () {
@@ -214,7 +214,7 @@ class NotifyRemovedSubscriber extends AbstractService
             }
             else
             {
-                \XF::logError("Expected user {$this->conversationData['starter']} to exist when reporting " . $this->getConversationTitle(), true);
+                \XF::logError("Expected user {$this->conversationData['starterId']} to exist when reporting " . $this->getConversationTitle(), true);
             }
         }
     }
