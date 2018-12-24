@@ -107,8 +107,9 @@ class Setup extends AbstractSetup
             }
 
             $option->setOption('verify_value', false);
+            $option->setOption('verify_validation_callback', false);
             $option->option_value = $threadData;
-            $option->saveIfChanged();
+            $option->save();
         }
 
         /** @var \XF\Entity\Option $option */
@@ -161,8 +162,9 @@ class Setup extends AbstractSetup
             }
 
             $option->setOption('verify_value', false);
+            $option->setOption('verify_validation_callback', false);
             $option->option_value = $conversationData;
-            $option->saveIfChanged();
+            $option->save();
         }
     }
 
