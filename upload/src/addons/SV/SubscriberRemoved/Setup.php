@@ -73,7 +73,7 @@ class Setup extends AbstractSetup
         $this->app->registry()->delete('svSubscriberRemovedOptions');
     }
 
-    public function upgrade2010000Step1()
+    public function upgrade2010100Step1()
     {
         /** @var \XF\Repository\User $userRepo */
         $userRepo = \XF::repository('XF:User');
@@ -135,7 +135,7 @@ class Setup extends AbstractSetup
                 }
             }
 
-            if ($conversationData['recipients'])
+            if (isset($conversationData['recipients']))
             {
                 $recipients = preg_split('#\s*,\s*#', $conversationData['recipients'], -1, PREG_SPLIT_NO_EMPTY);
                 unset($conversationData['recipients']);
