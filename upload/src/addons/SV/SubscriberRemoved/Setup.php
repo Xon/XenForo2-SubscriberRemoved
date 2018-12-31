@@ -67,7 +67,7 @@ class Setup extends AbstractSetup
                 {
                     $option->setOption('verify_value', false);
                     $option->setOption('verify_validation_callback', false);
-                    $option->sub_options = '*';
+                    $option->sub_options = ['*'];
                     $option->option_value = $optionValue;
                     $option->saveIfChanged();
                 }
@@ -111,7 +111,7 @@ class Setup extends AbstractSetup
 
             $option->setOption('verify_value', false);
             $option->setOption('verify_validation_callback', false);
-            $option->sub_options = '*';
+            $option->sub_options = ['*'];
             $option->option_value = $threadData;
             $option->save();
         }
@@ -167,7 +167,7 @@ class Setup extends AbstractSetup
 
             $option->setOption('verify_value', false);
             $option->setOption('verify_validation_callback', false);
-            $option->sub_options = '*';
+            $option->sub_options = ['*'];
             $option->option_value = $conversationData;
             $option->save();
         }
