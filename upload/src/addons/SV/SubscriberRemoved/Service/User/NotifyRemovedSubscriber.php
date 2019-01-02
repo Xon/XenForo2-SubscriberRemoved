@@ -46,17 +46,20 @@ class NotifyRemovedSubscriber extends AbstractService
 
     protected function setup()
     {
-        $this->startThread = \XF::options()->sv_subscriberremoved_thread_data['enable'];
-        $this->startConversation = \XF::options()->sv_subscriberremoved_conversation_data['enable'];
+        $options = \XF::options();
 
+        $threadData = $options->sv_subscriberremoved_thread_data;
+        $this->startThread = !empty($threadData['enable']);
         if ($this->startThread)
         {
-            $this->setThreadData(\XF::options()->sv_subscriberremoved_thread_data);
+            $this->setThreadData($threadData);
         }
 
+        $convData = $options->sv_subscriberremoved_conversation_data;
+        $this->startConversation = !empty($convData['enable']);
         if ($this->startConversation)
         {
-            $this->setConversationData(\XF::options()->sv_subscriberremoved_conversation_data);
+            $this->setConversationData($convData);
         }
 
         if ($this->isSubscriber === null || $this->activeUpgrades === null)
