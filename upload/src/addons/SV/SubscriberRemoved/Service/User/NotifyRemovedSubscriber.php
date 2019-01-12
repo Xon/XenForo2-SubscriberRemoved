@@ -9,14 +9,17 @@ use XF\Service\AbstractService;
 
 class NotifyRemovedSubscriber extends AbstractService
 {
+    /** @var string */
     protected $action;
 
+    /** @var bool */
     protected $startThread = false;
     /** @var \XF\Entity\Forum */
     protected $threadForum = null;
     /** @var User */
     protected $threadAuthor = null;
 
+    /** @var bool */
     protected $startConversation = false;
     /** @var User */
     protected $conversationStarter = null;
@@ -26,6 +29,7 @@ class NotifyRemovedSubscriber extends AbstractService
     /** @var null|\XF\Entity\User */
     protected $removedSubscriber = null;
 
+    /** @var null|bool */
     protected $isSubscriber = null;
 
     /** @var  \XF\Entity\UserUpgradeActive[] */
@@ -36,6 +40,13 @@ class NotifyRemovedSubscriber extends AbstractService
     protected $threadData       = [];
     protected $conversationData = [];
 
+    /**
+     * NotifyRemovedSubscriber constructor.
+     *
+     * @param \XF\App $app
+     * @param User    $removedSubscriber
+     * @param string  $action
+     */
     public function __construct(\XF\App $app, User $removedSubscriber, $action)
     {
         $this->action = $action;
@@ -64,7 +75,7 @@ class NotifyRemovedSubscriber extends AbstractService
 
         if ($this->isSubscriber === null || $this->activeUpgrades === null)
         {
-            $this->isSubscriber = $this->determineIfSubscriber();
+            $this->determineIfSubscriber();
         }
     }
 
@@ -73,7 +84,8 @@ class NotifyRemovedSubscriber extends AbstractService
         /** @var \XF\Repository\UserUpgrade $userUpgradeRepo */
         $userUpgradeRepo = $this->repository('XF:UserUpgrade');
         $this->activeUpgrades = $userUpgradeRepo->findActiveUserUpgradesForList()
-                                                ->where('user_id', $this->removedSubscriber->user_id)->fetch();
+                                                ->where('user_id', $this->removedSubscriber->user_id)
+                                                ->fetch();
 
         $this->isSubscriber = $this->activeUpgrades->count() > 0;
     }
@@ -165,6 +177,11 @@ class NotifyRemovedSubscriber extends AbstractService
 
     public function notify()
     {
+        if (!$this->isSubscriber)
+        {
+            return;
+        }
+
         if ($this->startThread)
         {
             if ($this->threadForum && $this->threadAuthor)
