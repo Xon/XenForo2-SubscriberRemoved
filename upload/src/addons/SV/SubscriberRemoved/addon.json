@@ -2,8 +2,8 @@
     "legacy_addon_id": "SV_SubscriberRemoved",
     "title": "Subscriber Removed Notification",
     "description": "",
-    "version_id": 2010400,
-    "version_string": "2.1.4",
+    "version_id": 2010500,
+    "version_string": "2.1.5",
     "dev" : "Xon",
     "dev_url": "https://atelieraphelion.com/",
     "faq_url": "",
@@ -12,5 +12,5 @@
     "require" : {
         "php": ["5.6.0", "PHP 5.6.0+"]
     },
-    "icon": "fa-money"
+    "icon": "icon.png"
 }
