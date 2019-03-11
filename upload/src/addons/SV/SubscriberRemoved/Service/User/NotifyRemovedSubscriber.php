@@ -192,7 +192,12 @@ class NotifyRemovedSubscriber extends AbstractService
                     $threadCreator = $this->service('XF:Thread\Creator', $this->threadForum);
                     $threadCreator->setContent($this->getThreadTitle(), $this->getThreadMessage());
                     $threadCreator->setIsAutomated();
-                    $threadCreator->setPrefix($this->threadForum->default_prefix_id);
+                    $forum = $this->threadForum;
+                    $defaultPrefix = isset($forum->sv_default_prefix_ids) ? $forum->sv_default_prefix_ids : $forum->default_prefix_id;
+                    if ($defaultPrefix)
+                    {
+                        $threadCreator->setPrefix($defaultPrefix);
+                    }
                     $threadCreator->save();
 
                     return $threadCreator;

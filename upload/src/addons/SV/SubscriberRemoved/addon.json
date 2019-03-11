@@ -1,9 +1,9 @@
 {
     "legacy_addon_id": "SV_SubscriberRemoved",
     "title": "Subscriber Removed Notification",
-    "description": "",
-    "version_id": 2010500,
-    "version_string": "2.1.5",
+    "description": "Alerts when a subscriber is banned or deleted so manual cleanup can be done",
+    "version_id": 2010600,
+    "version_string": "2.1.6",
     "dev" : "Xon",
     "dev_url": "https://atelieraphelion.com/",
     "faq_url": "",
