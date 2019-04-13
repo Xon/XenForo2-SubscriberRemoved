@@ -50,13 +50,14 @@ class Setup extends AbstractSetup
 
         if ($deferOptions)
         {
-            $this->app->registry()->set('svSubscriberRemovedOptions', $deferOptions);
+
+            $this->app->registry()->set('svSubscriberRemovedOpts', $deferOptions);
         }
     }
 
     protected function finaliseOptions()
     {
-        $deferOptions = $this->app->registry()->get('svSubscriberRemovedOptions');
+        $deferOptions = $this->app->registry()->get('svSubscriberRemovedOpts');
         if (!$deferOptions && is_array($deferOptions))
         {
             foreach ($deferOptions as $optionName => $optionValue)
@@ -73,7 +74,7 @@ class Setup extends AbstractSetup
                 }
             }
         }
-        $this->app->registry()->delete('svSubscriberRemovedOptions');
+        $this->app->registry()->delete('svSubscriberRemovedOpts');
     }
 
     public function upgrade2010100Step1()
@@ -186,6 +187,6 @@ class Setup extends AbstractSetup
 
     public function uninstallStep1()
     {
-        $this->app->registry()->delete('svSubscriberRemovedOptions');
+        $this->app->registry()->delete('svSubscriberRemovedOpts');
     }
 }
