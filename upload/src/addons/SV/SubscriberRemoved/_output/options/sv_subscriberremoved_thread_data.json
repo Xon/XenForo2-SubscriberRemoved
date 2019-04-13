@@ -3,9 +3,7 @@
     "edit_format_params": "\\SV\\SubscriberRemoved\\Option\\SubscriberRemovedCreateThread::renderOption",
     "data_type": "array",
     "sub_options": [
-        "enable",
-        "nodeId",
-        "threadAuthorId"
+        "*"
     ],
     "validation_class": "\\SV\\SubscriberRemoved\\Option\\SubscriberRemovedCreateThread",
     "validation_method": "verifyOption",

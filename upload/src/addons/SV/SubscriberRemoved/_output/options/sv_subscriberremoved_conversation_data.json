@@ -3,9 +3,7 @@
     "edit_format_params": "SV\\SubscriberRemoved\\Option\\SubscriberRemovedStartConversation::renderOption",
     "data_type": "array",
     "sub_options": [
-        "enable",
-        "starterId",
-        "recipientIds"
+        "*"
     ],
     "validation_class": "\\SV\\SubscriberRemoved\\Option\\SubscriberRemovedStartConversation",
     "validation_method": "verifyOption",
