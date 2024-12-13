@@ -7,6 +7,7 @@
     ],
     "validation_class": "\\SV\\SubscriberRemoved\\Option\\SubscriberRemovedStartConversation",
     "validation_method": "verifyOption",
+    "advanced": false,
     "default_value": "{\"enable\":0,\"starterId\":1,\"recipientIds\":[]}",
     "relations": {
         "SV_SubscriberRemoved": 10

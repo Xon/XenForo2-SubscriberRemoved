@@ -7,6 +7,7 @@
     ],
     "validation_class": "\\SV\\SubscriberRemoved\\Option\\SubscriberRemovedCreateThread",
     "validation_method": "verifyOption",
+    "advanced": false,
     "default_value": "{\"enable\":0,\"nodeId\":\"\",\"threadAuthorId\":1}",
     "relations": {
         "SV_SubscriberRemoved": 1
