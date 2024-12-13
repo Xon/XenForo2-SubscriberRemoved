@@ -2,6 +2,8 @@
 
 namespace SV\SubscriberRemoved\XF\Entity;
 
+use SV\SubscriberRemoved\Service\User\NotifyRemovedSubscriber as NotifyRemovedSubscriberService;
+
 class User extends XFCP_User
 {
     protected function _postSave()
@@ -11,8 +13,7 @@ class User extends XFCP_User
         if ($this->is_banned && $this->isChanged('is_banned'))
         {
             \XF::runLater(function () {
-                /** @var \SV\SubscriberRemoved\Service\User\NotifyRemovedSubscriber $service */
-                $service = $this->app()->service('SV\SubscriberRemoved:User\NotifyRemovedSubscriber', $this, 'banned');
+                $service = NotifyRemovedSubscriberService::get($this, 'banned');
                 $service->notify();
             });
         }
@@ -25,8 +26,7 @@ class User extends XFCP_User
         if (!$this->is_banned)
         {
             \XF::runLater(function () {
-                /** @var \SV\SubscriberRemoved\Service\User\NotifyRemovedSubscriber $service */
-                $service = $this->app()->service('SV\SubscriberRemoved:User\NotifyRemovedSubscriber', $this, 'banned');
+                $service = NotifyRemovedSubscriberService::get($this, 'banned');
                 $service->notify();
             });
         }

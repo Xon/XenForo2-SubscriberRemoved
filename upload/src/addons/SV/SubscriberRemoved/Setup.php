@@ -2,10 +2,18 @@
 
 namespace SV\SubscriberRemoved;
 
+use SV\StandardLib\Helper;
 use XF\AddOn\AbstractSetup;
 use XF\AddOn\StepRunnerInstallTrait;
 use XF\AddOn\StepRunnerUninstallTrait;
 use XF\AddOn\StepRunnerUpgradeTrait;
+use XF\Entity\Option as OptionEntity;
+use XF\Entity\User as UserEntity;
+use XF\Finder\User as UserFinder;
+use XF\Repository\User as UserRepo;
+use function array_map;
+use function is_array;
+use function preg_split;
 
 class Setup extends AbstractSetup
 {
@@ -13,7 +21,7 @@ class Setup extends AbstractSetup
     use StepRunnerUpgradeTrait;
     use StepRunnerUninstallTrait;
 
-    public function upgrade2000000Step1()
+    public function upgrade2000000Step1(): void
     {
         $deferOptions = [];
 
@@ -30,11 +38,11 @@ class Setup extends AbstractSetup
         if ($options->offsetExists('subnotify_sendpm'))
         {
             $recipients = preg_split('#\s*,\s*#', $options->subnotify_pmrecipients, -1, PREG_SPLIT_NO_EMPTY);
-            $recipients = \array_map('\trim', $recipients);
-            $rawUsers = \XF::finder('XF:User')
-                           ->where('username', $recipients)
-                           ->limit(1)
-                           ->fetchColumns('user_id');
+            $recipients = array_map('\trim', $recipients);
+            $rawUsers = Helper::finder(UserFinder::class)
+                              ->where('username', $recipients)
+                              ->limit(1)
+                              ->fetchColumns('user_id');
             $recipients = [];
             foreach ($rawUsers as $rawUser)
             {
@@ -55,16 +63,15 @@ class Setup extends AbstractSetup
         }
     }
 
-    protected function finaliseOptions()
+    protected function finaliseOptions(): void
     {
         $deferOptions = $this->app->registry()->get('svSubscriberRemovedOpts');
-        if (!$deferOptions && is_array($deferOptions))
+        if (is_array($deferOptions))
         {
             foreach ($deferOptions as $optionName => $optionValue)
             {
-                /** @var \XF\Entity\Option $option */
-                $option = \XF::finder('XF:Option')->whereId($optionName)->fetchOne();
-                if ($option)
+                $option = Helper::find(OptionEntity::class, $optionName);
+                if ($option !== null)
                 {
                     $option->setOption('verify_value', false);
                     $option->setOption('verify_validation_callback', false);
@@ -77,14 +84,12 @@ class Setup extends AbstractSetup
         $this->app->registry()->delete('svSubscriberRemovedOpts');
     }
 
-    public function upgrade2010100Step1()
+    public function upgrade2010100Step1(): void
     {
-        /** @var \XF\Repository\User $userRepo */
-        $userRepo = \XF::repository('XF:User');
+        $userRepo = Helper::repository(UserRepo::class);
 
-        /** @var \XF\Entity\Option $option */
-        $option = \XF::finder('XF:Option')->whereId('sv_subscriberremoved_thread_data')->fetchOne();
-        if ($option)
+        $option = Helper::find(OptionEntity::class, 'sv_subscriberremoved_thread_data');
+        if ($option !== null)
         {
             $threadData = $option->option_value;
             if (isset($threadData['create_thread']))
@@ -100,7 +105,7 @@ class Setup extends AbstractSetup
 
             if (isset($threadData['thread_author']))
             {
-                /** @var \XF\Entity\User $threadAuthor */
+                /** @var UserEntity $threadAuthor */
                 $threadAuthor = $userRepo->getUserByNameOrEmail($threadData['thread_author']);
                 unset($threadData['thread_author']);
 
@@ -117,9 +122,8 @@ class Setup extends AbstractSetup
             $option->save();
         }
 
-        /** @var \XF\Entity\Option $option */
-        $option = \XF::finder('XF:Option')->whereId('sv_subscriberremoved_conversation_data')->fetchOne();
-        if ($option)
+        $option = Helper::find(OptionEntity::class, 'sv_subscriberremoved_conversation_data');
+        if ($option !== null)
         {
             $conversationData = $option->option_value;
             if (isset($conversationData['start_conversation']))
@@ -130,11 +134,9 @@ class Setup extends AbstractSetup
 
             if (isset($conversationData['starter']))
             {
-                /** @var \XF\Entity\User $threadAuthor */
                 $threadAuthor = $userRepo->getUserByNameOrEmail($conversationData['starter']);
                 unset($conversationData['starter']);
-
-                if ($threadAuthor)
+                if ($threadAuthor !== null)
                 {
                     $conversationData['starterId'] = $threadAuthor->user_id;
                 }
@@ -146,12 +148,10 @@ class Setup extends AbstractSetup
                 unset($conversationData['recipients']);
                 $recipientIds = [];
 
-                foreach ($recipients AS $key => $recipient)
+                foreach ($recipients as $recipient)
                 {
-                    /** @var \XF\Entity\User $user */
                     $user = $userRepo->getUserByNameOrEmail($recipient);
-
-                    if (!$user)
+                    if ($user === null)
                     {
                         continue;
                     }
@@ -175,17 +175,20 @@ class Setup extends AbstractSetup
     }
 
 
-    public function postInstall(array &$stateChanges)
+    public function postInstall(array &$stateChanges): void
     {
+        parent::postInstall($stateChanges);
         $this->finaliseOptions();
     }
 
-    public function postUpgrade($previousVersion, array &$stateChanges)
+    public function postUpgrade($previousVersion, array &$stateChanges): void
     {
+        $previousVersion = (int)$previousVersion;
+        parent::postUpgrade($previousVersion, $stateChanges);
         $this->finaliseOptions();
     }
 
-    public function uninstallStep1()
+    public function uninstallStep1(): void
     {
         $this->app->registry()->delete('svSubscriberRemovedOpts');
     }

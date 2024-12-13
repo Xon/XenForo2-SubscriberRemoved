@@ -2,10 +2,18 @@
 
 namespace SV\SubscriberRemoved\Service\User;
 
-use XF\Entity\User;
-use XF\Entity\UserUpgradeActive;
+use SV\StandardLib\Helper;
+use XF\App;
+use XF\Entity\Forum as ForumEntity;
+use XF\Entity\User as UserEntity;
+use XF\Entity\UserUpgradeActive as UserUpgradeActiveEntity;
+use XF\Finder\PaymentProviderLog as PaymentProviderLogFinder;
 use XF\Mvc\Entity\AbstractCollection;
+use XF\Repository\UserUpgrade as UserUpgradeRepo;
 use XF\Service\AbstractService;
+use XF\Service\Conversation\Creator as ConversationCreatorService;
+use XF\Service\Thread\Creator as ThreadCreatorService;
+use function implode;
 
 class NotifyRemovedSubscriber extends AbstractService
 {
@@ -14,25 +22,25 @@ class NotifyRemovedSubscriber extends AbstractService
 
     /** @var bool */
     protected $startThread = false;
-    /** @var \XF\Entity\Forum */
+    /** @var ForumEntity */
     protected $threadForum = null;
-    /** @var User */
+    /** @var UserEntity */
     protected $threadAuthor = null;
 
     /** @var bool */
     protected $startConversation = false;
-    /** @var User */
+    /** @var UserEntity */
     protected $conversationStarter = null;
-    /** @var AbstractCollection */
+    /** @var AbstractCollection<UserEntity> */
     protected $conversationRecipients;
 
-    /** @var null|\XF\Entity\User */
+    /** @var null|UserEntity */
     protected $removedSubscriber = null;
 
     /** @var null|bool */
     protected $isSubscriber = null;
 
-    /** @var  \XF\Entity\UserUpgradeActive[] */
+    /** @var  UserUpgradeActiveEntity[] */
     protected $activeUpgrades = null;
 
     protected $contentPhrases   = [];
@@ -40,14 +48,12 @@ class NotifyRemovedSubscriber extends AbstractService
     protected $threadData       = [];
     protected $conversationData = [];
 
-    /**
-     * NotifyRemovedSubscriber constructor.
-     *
-     * @param \XF\App $app
-     * @param User    $removedSubscriber
-     * @param string  $action
-     */
-    public function __construct(\XF\App $app, User $removedSubscriber, $action)
+    public static function get(UserEntity $removedSubscriber, string $action): self
+    {
+        return Helper::service(self::class, $removedSubscriber, $action);
+    }
+
+    public function __construct(App $app, UserEntity $removedSubscriber, string $action)
     {
         $this->action = $action;
         $this->removedSubscriber = $removedSubscriber;
@@ -55,7 +61,8 @@ class NotifyRemovedSubscriber extends AbstractService
         parent::__construct($app);
     }
 
-    protected function setup()
+    /** @noinspection PhpMissingParentCallCommonInspection */
+    protected function setup(): void
     {
         $options = \XF::options();
 
@@ -79,10 +86,9 @@ class NotifyRemovedSubscriber extends AbstractService
         }
     }
 
-    protected function determineIfSubscriber()
+    protected function determineIfSubscriber(): void
     {
-        /** @var \XF\Repository\UserUpgrade $userUpgradeRepo */
-        $userUpgradeRepo = $this->repository('XF:UserUpgrade');
+        $userUpgradeRepo = \XF::repository(UserUpgradeRepo::class);
         $this->activeUpgrades = $userUpgradeRepo->findActiveUserUpgradesForList()
                                                 ->where('user_id', $this->removedSubscriber->user_id)
                                                 ->fetch();
@@ -90,21 +96,21 @@ class NotifyRemovedSubscriber extends AbstractService
         $this->isSubscriber = $this->activeUpgrades->count() > 0;
     }
 
-    protected function setThreadData(array $threadData)
+    protected function setThreadData(array $threadData): void
     {
         $this->threadData = $threadData;
-        $this->threadForum = $this->findOne('XF:Forum', ['node_id' => $threadData['nodeId']]);
-        $this->threadAuthor = $this->findOne('XF:User', ['user_id' => $threadData['threadAuthorId']]);
+        $this->threadForum = Helper::findOne(ForumEntity::class, ['node_id' => $threadData['nodeId']]);
+        $this->threadAuthor = Helper::findOne(UserEntity::class, ['user_id' => $threadData['threadAuthorId']]);
     }
 
-    protected function setConversationData(array $conversationData)
+    protected function setConversationData(array $conversationData): void
     {
         $this->conversationData = $conversationData;
-        $this->conversationStarter = $this->findOne('XF:User', ['user_id' => $conversationData['starterId']]);
-        $this->conversationRecipients = $this->finder('XF:User')->whereIds($conversationData['recipientIds'])->fetch();
+        $this->conversationStarter = Helper::findOne(UserEntity::class, ['user_id' => $conversationData['starterId']]);
+        $this->conversationRecipients = Helper::findByIds(UserEntity::class, $conversationData['recipientIds']);
     }
 
-    protected function getUpgradePhrases()
+    protected function getUpgradePhrases(): array
     {
         if (!$this->upgradePhrases)
         {
@@ -114,7 +120,7 @@ class NotifyRemovedSubscriber extends AbstractService
         return $this->upgradePhrases;
     }
 
-    protected function generateUpgradePhrases()
+    protected function generateUpgradePhrases(): void
     {
         foreach ($this->activeUpgrades AS $activeUpgrade)
         {
@@ -125,32 +131,31 @@ class NotifyRemovedSubscriber extends AbstractService
         }
     }
 
-    protected function getThreadTitle()
+    protected function getThreadTitle(): string
     {
         return \XF::phrase('sv_subscriberremoved_title', $this->getPhraseParams())->render();
     }
 
-    protected function getThreadMessage()
+    protected function getThreadMessage(): string
     {
         return \XF::phrase('sv_subscriberremoved_message', $this->getPhraseParams())->render();
     }
 
-    protected function getConversationTitle()
+    protected function getConversationTitle(): string
     {
         return $this->getThreadTitle();
     }
 
-    protected function getConversationMessage()
+    protected function getConversationMessage(): string
     {
         return $this->getThreadMessage();
     }
 
-    protected function getUpgradePhraseParams(UserUpgradeActive $activeUpgrade)
+    protected function getUpgradePhraseParams(UserUpgradeActiveEntity $activeUpgrade): array
     {
-        /** @var \XF\Entity\PaymentProviderLog $paymentLog */
-        $paymentLog = $this->finder('XF:PaymentProviderLog')
-                           ->where('purchase_request_key', $activeUpgrade->purchase_request_key)
-                           ->fetchOne();
+        $paymentLog = Helper::finder(PaymentProviderLogFinder::class)
+                            ->where('purchase_request_key', $activeUpgrade->purchase_request_key)
+                            ->fetchOne();
         $txnId = $paymentLog ? $paymentLog->transaction_id : \XF::phrase('n_a');
 
         return [
@@ -163,7 +168,7 @@ class NotifyRemovedSubscriber extends AbstractService
         ];
     }
 
-    protected function getPhraseParams()
+    protected function getPhraseParams(): array
     {
         return [
             'removedUserName'  => $this->removedSubscriber->username,
@@ -175,7 +180,7 @@ class NotifyRemovedSubscriber extends AbstractService
         ];
     }
 
-    public function notify()
+    public function notify(): void
     {
         if (!$this->isSubscriber)
         {
@@ -186,14 +191,13 @@ class NotifyRemovedSubscriber extends AbstractService
         {
             if ($this->threadForum && $this->threadAuthor)
             {
-                /** @var \XF\Service\Thread\Creator $threadCreator */
+                /** @var ThreadCreatorService $threadCreator */
                 $threadCreator = \XF::asVisitor($this->threadAuthor, function () {
-                    /** @var \XF\Service\Thread\Creator $threadCreator */
-                    $threadCreator = $this->service('XF:Thread\Creator', $this->threadForum);
+                    $threadCreator = Helper::service(ThreadCreatorService::class, $this->threadForum);
                     $threadCreator->setContent($this->getThreadTitle(), $this->getThreadMessage());
                     $threadCreator->setIsAutomated();
                     $forum = $this->threadForum;
-                    $defaultPrefix = isset($forum->sv_default_prefix_ids) ? $forum->sv_default_prefix_ids : $forum->default_prefix_id;
+                    $defaultPrefix = $forum->sv_default_prefix_ids ?? $forum->default_prefix_id;
                     if ($defaultPrefix)
                     {
                         $threadCreator->setPrefix($defaultPrefix);
@@ -221,10 +225,9 @@ class NotifyRemovedSubscriber extends AbstractService
         {
             if ($this->conversationStarter && $this->conversationRecipients->count() > 0)
             {
-                /** @var \XF\Service\Conversation\Creator $conversationCreator */
+                /** @var ConversationCreatorService $conversationCreator */
                 $conversationCreator = \XF::asVisitor($this->conversationStarter, function () {
-                    /** @var \XF\Service\Conversation\Creator $conversationCreator */
-                    $conversationCreator = $this->service('XF:Conversation\Creator', $this->conversationStarter);
+                    $conversationCreator = Helper::service(ConversationCreatorService::class, $this->conversationStarter);
                     $conversationCreator->setRecipientsTrusted($this->conversationRecipients);
                     $conversationCreator->setContent($this->getConversationTitle(), $this->getConversationMessage());
                     $conversationCreator->setIsAutomated();

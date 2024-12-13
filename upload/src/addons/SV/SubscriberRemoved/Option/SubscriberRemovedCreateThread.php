@@ -2,12 +2,19 @@
 
 namespace SV\SubscriberRemoved\Option;
 
-use XF\Entity\Option;
+use SV\StandardLib\Helper;
+use XF\Entity\Option as OptionEntity;
+use XF\Entity\User as UserEntity;
+use XF\Finder\User as UserFinder;
 use XF\Option\AbstractOption;
+use XF\Repository\Node as NodeRepo;
+use XF\Repository\User as UserRepo;
+use function array_map;
+use function reset;
 
 class SubscriberRemovedCreateThread extends AbstractOption
 {
-    public static function renderOption(Option $option, array $htmlParams)
+    public static function renderOption(OptionEntity $option, array $htmlParams): string
     {
         $selectData = self::getSelectData($option, $htmlParams);
 
@@ -16,14 +23,13 @@ class SubscriberRemovedCreateThread extends AbstractOption
         );
 
         $threadData = $option->option_value;
-        $threadAuthor = empty($threadData['threadAuthorId']) ? null : $threadData['threadAuthorId'];
-
-        if ($threadAuthor)
+        $threadAuthor = (int)($threadData['threadAuthorId'] ?? 0);
+        if ($threadAuthor !== 0)
         {
-            $rawUsernames = \XF::finder('XF:User')
-                               ->where('user_id', $threadAuthor)
-                               ->limit(1)
-                               ->fetchColumns('username');
+            $rawUsernames = Helper::finder(UserFinder::class)
+                                  ->where('user_id', $threadAuthor)
+                                  ->limit(1)
+                                  ->fetchColumns('username');
             $rawUsernames = reset($rawUsernames);
             $threadAuthor = $rawUsernames ? $rawUsernames['username'] : null;
         }
@@ -36,38 +42,37 @@ class SubscriberRemovedCreateThread extends AbstractOption
         );
     }
 
-    public static function verifyOption(array &$threadData, Option $option)
+    public static function verifyOption(array &$threadData, OptionEntity $option): bool
     {
         if (isset($threadData['enable']))
         {
             $threadData['enable'] = (int)$threadData['enable'];
             $threadData['nodeId'] = (int)$threadData['nodeId'];
 
-            /** @var \XF\Repository\User $userRepo */
-            $userRepo = \XF::repository('XF:User');
-
-            if (isset($threadData['threadAuthor']))
+            $userRepo = Helper::repository(UserRepo::class);
+            $threadAuthorId = (int)($threadData['threadAuthor'] ?? 0);
+            unset($threadData['threadAuthor']);
+            if ($threadAuthorId !== 0)
             {
-                /** @var \XF\Entity\User $threadAuthor */
-                $threadAuthor = $userRepo->getUserByNameOrEmail($threadData['threadAuthor']);
-                unset($threadData['threadAuthor']);
-
-                if (!$threadAuthor)
+                /** @var UserEntity|null $threadAuthor */
+                $threadAuthor = $userRepo->getUserByNameOrEmail($threadAuthorId);
+                if ($threadAuthor === null)
                 {
                     $option->error(\XF::phrase('requested_user_x_not_found', ['name' => $threadData['starter']]));
                 }
-
-                $threadData['threadAuthorId'] = $threadAuthor->user_id;
+                else
+                {
+                    $threadData['threadAuthorId'] = $threadAuthor->user_id;
+                }
             }
         }
 
         return !$option->hasErrors();
     }
 
-    protected static function getSelectData(Option $option, array $htmlParams)
+    protected static function getSelectData(OptionEntity $option, array $htmlParams): array
     {
-        /** @var \XF\Repository\Node $nodeRepo */
-        $nodeRepo = \XF::repository('XF:Node');
+        $nodeRepo = Helper::repository(NodeRepo::class);
 
         $choices = $nodeRepo->getNodeOptionsData(true, 'Forum', 'option');
         $choices = array_map(
