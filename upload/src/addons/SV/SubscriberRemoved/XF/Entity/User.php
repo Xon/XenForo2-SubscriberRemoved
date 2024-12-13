@@ -13,19 +13,13 @@ class User extends XFCP_User
 
         if ($this->is_banned && $this->isChanged('is_banned'))
         {
-            \XF::runLater(function () {
-                $service = NotifyRemovedSubscriberService::get($this, 'banned');
-                $service->notify();
-            });
+            $this->notifySubscriberRemoved('banned');
         }
         else if ($this->isChanged('user_state')
                  && in_array($this->user_state, ['rejected', 'disabled'], true)
                  && in_array($this->getPreviousValue('user_state'), ['rejected', 'disabled'], true))
         {
-            \XF::runLater(function () {
-                $service = NotifyRemovedSubscriberService::get($this, $this->user_state);
-                $service->notify();
-            });
+            $this->notifySubscriberRemoved($this->user_state);
         }
     }
 
@@ -33,12 +27,17 @@ class User extends XFCP_User
     {
         parent::_postDelete();
 
-        if (!$this->is_banned)
+        if (!$this->is_banned && !in_array($this->user_state, ['rejected', 'disabled'], true))
         {
-            \XF::runLater(function () {
-                $service = NotifyRemovedSubscriberService::get($this, 'banned');
-                $service->notify();
-            });
+            $this->notifySubscriberRemoved('deleted');
         }
+    }
+
+    protected function notifySubscriberRemoved(string $action): void
+    {
+        \XF::runLater(function () use ($action) {
+            $service = NotifyRemovedSubscriberService::get($this, $action);
+            $service->notify();
+        });
     }
 }
