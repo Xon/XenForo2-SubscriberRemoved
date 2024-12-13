@@ -208,11 +208,11 @@ class NotifyRemovedSubscriber extends AbstractService
             {
                 if (!$this->threadForum)
                 {
-                    \XF::logError("Expected user {$this->threadForum['threadAuthorId']} to exist when reporting " . $this->getThreadTitle(), true);
+                    \XF::logError("Expected user {$this->threadData['threadAuthorId']} to exist when reporting " . $this->getThreadTitle(), true);
                 }
                 if (!$this->threadAuthor)
                 {
-                    \XF::logError("Expected forum {$this->threadForum['nodeId']} to exist when reporting " . $this->getThreadTitle(), true);
+                    \XF::logError("Expected forum {$this->threadData['nodeId']} to exist when reporting " . $this->getThreadTitle(), true);
                 }
             }
         }
