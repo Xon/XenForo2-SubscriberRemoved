@@ -3,6 +3,7 @@
 namespace SV\SubscriberRemoved\XF\Entity;
 
 use SV\SubscriberRemoved\Service\User\NotifyRemovedSubscriber as NotifyRemovedSubscriberService;
+use function in_array;
 
 class User extends XFCP_User
 {
@@ -14,6 +15,15 @@ class User extends XFCP_User
         {
             \XF::runLater(function () {
                 $service = NotifyRemovedSubscriberService::get($this, 'banned');
+                $service->notify();
+            });
+        }
+        else if ($this->isChanged('user_state')
+                 && in_array($this->user_state, ['rejected', 'disabled'], true)
+                 && in_array($this->getPreviousValue('user_state'), ['rejected', 'disabled'], true))
+        {
+            \XF::runLater(function () {
+                $service = NotifyRemovedSubscriberService::get($this, $this->user_state);
                 $service->notify();
             });
         }
